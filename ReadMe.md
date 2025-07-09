@@ -8,6 +8,8 @@ Requires `.NET 8`. [click](https://dotnet.microsoft.com/ru-ru/download/dotnet/8.
 
 Install `.NET`, then just install msi from [releases page](../../releases) (or build installer yourself).
 
+Installation directory - `%ProgramFiles%\XeroXP\RedButtonService\`
+
 ## Configuration
 
 All configuration of service is in json files:
