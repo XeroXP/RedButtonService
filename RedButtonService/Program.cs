@@ -16,7 +16,8 @@ namespace RedButtonService
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                 .WriteTo.File(
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "service.log")
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "service.log"),
+                    rollOnFileSizeLimit: true
                 )
                 .CreateLogger();
 

@@ -81,6 +81,10 @@ Main config:
 }
 ```
 
+## Logging
+
+All logs are in `service.log` files.
+
 ## Telegram bot
 
 You can receive all erase trigger events and statuses.
