@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Platforms>AnyCPU;x86</Platforms>
+	  <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+	<!-- Only include Linux sources, when targeting .NET "core". .NET Framework is not
+  supported on Linux anyway, and this safes us some #if/#endif juggling in the Linux
+  sources. -->
+	<ItemGroup Condition="'$(IsNetFramework)' == 'true'">
+		<Compile Remove="Linux/**/*.cs" />
+	</ItemGroup>
+
+</Project>

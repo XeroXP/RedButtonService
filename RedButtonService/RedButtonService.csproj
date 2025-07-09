@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-RedButtonService-42561cd5-e1ee-40c9-b049-eb18d046ca11</UserSecretsId>
+	  <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.6" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Telegram.Bot" Version="22.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Eraser.DefaultPlugins\Eraser.DefaultPlugins.csproj" />
+    <ProjectReference Include="..\Eraser.Manager\Eraser.Manager.csproj" />
+    <ProjectReference Include="..\Eraser.Plugins\Eraser.Plugins.csproj" />
+    <ProjectReference Include="..\Eraser.Util.Native\Eraser.Util.Native.csproj" />
+    <ProjectReference Include="..\Eraser.Util\Eraser.Util.csproj" />
+    <ProjectReference Include="..\LockCheck\LockCheck.csproj" />
+  </ItemGroup>
+</Project>

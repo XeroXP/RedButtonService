@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Platforms>AnyCPU;x86</Platforms>
+	  <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Eraser.DefaultPlugins\Eraser.DefaultPlugins.csproj" />
+    <ProjectReference Include="..\Eraser.Manager\Eraser.Manager.csproj" />
+    <ProjectReference Include="..\Eraser.Plugins\Eraser.Plugins.csproj" />
+  </ItemGroup>
+
+</Project>

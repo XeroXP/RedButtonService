@@ -1,0 +1,42 @@
+﻿{
+  "Telegram": {
+    "Token": "",
+    "AdminIds": [ "111111111" ]
+  },
+  "USBTrigger": {
+    "FileName": "erase",
+    "TimeCheckSeconds": 60
+  },
+  "UserLogonTrigger": {
+    "Usernames": [ "SpecialUser" ]
+  },
+  "Eraser": {
+    "MaxTasks": 3,
+    "TimeStatusSendMinutes": 5,
+    "ToErase": [
+      {
+        "Type": "File",
+        "File": "F:\\test.txt"
+      },
+      {
+        "Type": "Dir",
+        "Dir": "F:\\test"
+      },
+      {
+        "Type": "RecycleBin"
+      },
+      {
+        "Type": "Unused",
+        "Drive": "E:\\"
+      },
+      {
+        "Type": "Drive",
+        "Drive": "E:\\"
+      },
+      {
+        "Type": "Drive",
+        "VolumeId": "\\\\?\\Volume{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}\\"
+      }
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+**/obj
+**/bin
+.vs/
+*.7z
+RedButtonService/service.json

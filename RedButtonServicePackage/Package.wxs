@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Define the variables in "$(var.*) expressions" -->
+<?define Name = "RedButtonService" ?>
+<?define Manufacturer = "XeroXP" ?>
+<?define Version = "1.0.0.0" ?>
+<?define UpgradeCode = "9ED3FF33-8718-444E-B44B-69A2344B7E98" ?>
+
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+	<Package Name="$(Name)"
+             Manufacturer="$(Manufacturer)"
+             Version="$(Version)"
+             UpgradeCode="$(var.UpgradeCode)"
+             Compressed="true">
+
+		<!-- Allow upgrades and prevent downgrades -->
+		<MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." />
+
+		<Media Id="1" Cabinet="cabinet.cab" EmbedCab="yes" />
+		<!-- Define the directory structure -->
+		<!--<Directory Id="TARGETDIR" Name="SourceDir">
+			<Directory Id="ProgramFiles64Folder">-->
+		<StandardDirectory Id="ProgramFiles64Folder">
+
+				<!-- Create a folder inside program files -->
+				<Directory Id="ROOTDIRECTORY" Name="$(var.Manufacturer)">
+
+					<!-- Create a folder within the parent folder given the name -->
+					<Directory Id="INSTALLFOLDER" Name="$(Name)">
+						
+					</Directory>
+				</Directory>
+		</StandardDirectory>
+			<!--</Directory>
+		</Directory>-->
+
+		<ComponentGroup  Id="Dlls"  Directory="INSTALLFOLDER">
+			<Files Include="$(var.RedButtonService.TargetDir)\publish\**" Directory="INSTALLFOLDER">
+				<Exclude Files="$(var.RedButtonService.TargetDir)\publish\RedButtonService.exe" />
+				<Exclude Files="$(var.RedButtonService.TargetDir)\publish\service.json" />
+				<Exclude Files="$(var.RedButtonService.TargetDir)\publish\service.example.json" />
+			</Files>
+		</ComponentGroup>
+
+		<!-- The files inside this DirectoryRef are linked to
+             the App.WindowsService directory via INSTALLFOLDER -->
+		<DirectoryRef Id="INSTALLFOLDER">
+
+			<!-- Create a single component which is the App.WindowsService.exe file -->
+			<Component Id="ServiceExecutable" Bitness="always64">
+
+				<!-- Copies the App.WindowsService.exe file using the
+                     project reference preprocessor variables -->
+				<File Id="RedButtonService.exe"
+                      Source="$(var.RedButtonService.TargetDir)\publish\RedButtonService.exe"
+                      KeyPath="true" />
+				<File Source="$(var.RedButtonService.TargetDir)\publish\service.example.json"
+					  Name="service.json" />
+
+				<!-- Remove all files from the INSTALLFOLDER on uninstall -->
+				<RemoveFile Id="ALLFILES" Name="*.*" On="both" />
+
+				<!-- Tell WiX to install the Service -->
+				<ServiceInstall Id="ServiceInstaller"
+                                Type="ownProcess"
+                                Name="RedButtonService"
+                                DisplayName="$(Name)"
+                                Description="A service that erase data."
+                                Start="auto"
+                                ErrorControl="normal" />
+
+				<!-- Tell WiX to start the Service -->
+				<ServiceControl Id="StartService"
+                                Start="install"
+                                Stop="both"
+                                Remove="uninstall"
+                                Name="RedButtonService"
+                                Wait="true" />
+			</Component>
+		</DirectoryRef>
+
+		<!-- Tell WiX to install the files -->
+		<Feature Id="Service" Title="RedButtonService Setup" Level="1">
+			<ComponentRef Id="ServiceExecutable" />
+			<ComponentGroupRef Id="Dlls" />
+		</Feature>
+
+	</Package>
+</Wix>
+
