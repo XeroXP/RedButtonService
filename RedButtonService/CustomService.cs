@@ -39,6 +39,7 @@ namespace RedButtonService
 
         protected override void OnStart(string[] args)
         {
+            _logger.Log(LogLevel.Debug, $"On Start args: '{(args != null ? string.Join(',', args) : "")}'.");
             base.OnStart(args);
 
             try
@@ -64,6 +65,7 @@ namespace RedButtonService
             _telegramBotService.EraseCancel += EraseCancelEvent;
             _telegramBotService.EraseBlock += EraseBlockEvent;
             _telegramBotService.SessionsLogOff += SessionsLogOffEvent;
+            _telegramBotService.ServiceRestart += ServiceRestartEvent;
             _telegramBotService.Start();
 
             _usbFlashDriveCheckerService = new USBFlashDriveCheckerService(_settings.USBTrigger, _loggerFactory);
@@ -88,6 +90,7 @@ namespace RedButtonService
                 _telegramBotService.EraseCancel -= EraseCancelEvent;
                 _telegramBotService.EraseBlock -= EraseBlockEvent;
                 _telegramBotService.SessionsLogOff -= SessionsLogOffEvent;
+                _telegramBotService.ServiceRestart -= ServiceRestartEvent;
                 _eraserService.TGMessageSend -= TGMessageSendEvent;
 
                 _usbFlashDriveCheckerService = null;
@@ -209,6 +212,20 @@ namespace RedButtonService
         private void TGMessageSendEvent(object? sender, TGMessageEventArgs e)
         {
             tgMessageSend(e.Message).GetAwaiter().GetResult();
+        }
+
+        private async Task RestartService()
+        {
+            await Task.Delay(5 * 1000);
+            OnStop();
+            await Task.Delay(5 * 1000);
+            //OnStart();
+            Environment.Exit(1);
+        }
+
+        private void ServiceRestartEvent(object? sender, EventArgs e)
+        {
+            Task.Run(() => RestartService());
         }
     }
 }

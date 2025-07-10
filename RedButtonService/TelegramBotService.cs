@@ -18,11 +18,13 @@ namespace RedButtonService
         private CancellationTokenSource cts;
         private User me;
         private TelegramBotClient bot;
+        private bool isSilent = false;
 
         public EventHandler EraseStart { get; set; }
         public EventHandler EraseCancel { get; set; }
         public EventHandler<EraseBlockEventArgs> EraseBlock { get; set; }
         public EventHandler SessionsLogOff { get; set; }
+        public EventHandler ServiceRestart { get; set; }
 
         public TelegramBotService(TelegramSettings telegramSettings, ILoggerFactory loggerFactory)
         {
@@ -118,128 +120,173 @@ namespace RedButtonService
             switch (command)
             {
                 case "/start":
-                    await bot.SendMessage(msg.Chat, """
+                    string startText = """
                 Red Button Start
-                """, parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                        replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                        replyMarkup: new ReplyKeyboardRemove()); // also remove keyboard to clean-up things
+                """;
+                    await Answer(startText, msg);
                     break;
                 case "/help":
-                    await bot.SendMessage(msg.Chat, """
+                    string helpText = """
                 <b><u>Bot menu</u></b>:
-                /help    - help
-                /debug   - send debug info
-                /erase   - trigger erase
-                /cancel  - cancel running erase task
-                /disable - disable erase
-                /enable  - enable erase
+                /help     - help
+                /debug    - send debug info
+                /erase    - trigger erase
+                /cancel   - cancel running erase task
+                /disable  - disable erase
+                /enable   - enable erase
                 /log_off  - log off all sessions
-                """, parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                        replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                        replyMarkup: new ReplyKeyboardRemove());
+                /silent   - disable notifications
+                /loud     - enable notifications
+                /restart  - restart service
+                """;
+                    await Answer(helpText, msg);
                     break;
                 case "/debug":
                     var options = new JsonSerializerOptions();
                     options.WriteIndented = true;
                     options.Encoder = JavaScriptEncoder.Default;
                     options.Converters.Add(new JsonStringEnumConverter());
-                    await bot.SendMessage(msg.Chat, JsonSerializer.Serialize(msg, options), parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                        replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                        replyMarkup: new ReplyKeyboardRemove());
+                    string debugText = JsonSerializer.Serialize(msg, options);
+                    await Answer(debugText, msg);
                     break;
                 case "/erase":
                     if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
                     {
                         EraseStart?.Invoke(this, EventArgs.Empty);
-                        _logger.Log(LogLevel.Information, $"Telegram bot trigger erase start");
-                        await bot.SendMessage(msg.Chat, $"Telegram bot trigger erase start", parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                            replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                            replyMarkup: new ReplyKeyboardRemove());
+                        string eraseStartText = $"Telegram bot trigger erase start";
+                        _logger.Log(LogLevel.Information, eraseStartText);
+                        await AnswerNoti(eraseStartText, msg);
                     }
                     else
                     {
-                        await bot.SendMessage(msg.Chat, """
-                    No permissions
-                    """, parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                            replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                            replyMarkup: new ReplyKeyboardRemove());
+                        await AnswerNoPermissions(msg);
                     }
                     break;
                 case "/cancel":
                     if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
                     {
                         EraseCancel?.Invoke(this, EventArgs.Empty);
-                        _logger.Log(LogLevel.Information, $"Telegram bot trigger erase cancel");
-                        await bot.SendMessage(msg.Chat, $"Telegram bot trigger erase cancel", parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                            replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                            replyMarkup: new ReplyKeyboardRemove());
+                        string eraseCancelText = $"Telegram bot trigger erase cancel";
+                        _logger.Log(LogLevel.Information, eraseCancelText);
+                        await AnswerNoti(eraseCancelText, msg);
                     }
                     else
                     {
-                        await bot.SendMessage(msg.Chat, """
-                    No permissions
-                    """, parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                            replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                            replyMarkup: new ReplyKeyboardRemove());
+                        await AnswerNoPermissions(msg);
                     }
                     break;
                 case "/disable":
                     if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
                     {
                         EraseBlock?.Invoke(this, new EraseBlockEventArgs(true));
-                        _logger.Log(LogLevel.Information, $"Telegram bot trigger erase block");
-                        await bot.SendMessage(msg.Chat, $"Telegram bot trigger erase block", parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                            replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                            replyMarkup: new ReplyKeyboardRemove());
+                        string eraseBlockText = $"Telegram bot trigger erase block";
+                        _logger.Log(LogLevel.Information, eraseBlockText);
+                        await AnswerNoti(eraseBlockText, msg);
                     }
                     else
                     {
-                        await bot.SendMessage(msg.Chat, """
-                    No permissions
-                    """, parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                            replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                            replyMarkup: new ReplyKeyboardRemove());
+                        await AnswerNoPermissions(msg);
                     }
                     break;
                 case "/enable":
                     if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
                     {
                         EraseBlock?.Invoke(this, new EraseBlockEventArgs(false));
-                        _logger.Log(LogLevel.Information, $"Telegram bot trigger erase unblock");
-                        await bot.SendMessage(msg.Chat, $"Telegram bot trigger erase unblock", parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                            replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                            replyMarkup: new ReplyKeyboardRemove());
+                        string eraseUnblockText = $"Telegram bot trigger erase unblock";
+                        _logger.Log(LogLevel.Information, eraseUnblockText);
+                        await AnswerNoti(eraseUnblockText, msg);
                     }
                     else
                     {
-                        await bot.SendMessage(msg.Chat, """
-                    No permissions
-                    """, parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                            replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                            replyMarkup: new ReplyKeyboardRemove());
+                        await AnswerNoPermissions(msg);
                     }
                     break;
                 case "/log_off":
                     if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
                     {
                         SessionsLogOff?.Invoke(this, EventArgs.Empty);
-                        _logger.Log(LogLevel.Information, $"Telegram bot trigger log off");
-                        await bot.SendMessage(msg.Chat, $"Telegram bot trigger log off", parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                            replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                            replyMarkup: new ReplyKeyboardRemove());
+                        string logOffText = $"Telegram bot trigger log off";
+                        _logger.Log(LogLevel.Information, logOffText);
+                        await AnswerNoti(logOffText, msg);
                     }
                     else
                     {
-                        await bot.SendMessage(msg.Chat, """
-                    No permissions
-                    """, parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
-                            replyParameters: new ReplyParameters() { MessageId = msg.Id },
-                            replyMarkup: new ReplyKeyboardRemove());
+                        await AnswerNoPermissions(msg);
+                    }
+                    break;
+                case "/silent":
+                    if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
+                    {
+                        string silentText = $"Telegram bot now can not send notifications";
+                        _logger.Log(LogLevel.Information, silentText);
+                        await AnswerNoti(silentText, msg);
+                        SetSilent(true);
+                    }
+                    else
+                    {
+                        await AnswerNoPermissions(msg);
+                    }
+                    break;
+                case "/loud":
+                    if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
+                    {
+                        SetSilent(false);
+                        string loudText = $"Telegram bot now can send notifications";
+                        _logger.Log(LogLevel.Information, loudText);
+                        await AnswerNoti(loudText, msg);
+                    }
+                    else
+                    {
+                        await AnswerNoPermissions(msg);
+                    }
+                    break;
+                case "/restart":
+                    if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
+                    {
+                        string restartText = $"Telegram bot trigger restart servce";
+                        _logger.Log(LogLevel.Information, restartText);
+                        await AnswerNoti(restartText, msg);
+                        ServiceRestart?.Invoke(this, EventArgs.Empty);
+                    }
+                    else
+                    {
+                        await AnswerNoPermissions(msg);
                     }
                     break;
                 default:
                     await OnCommand("/help", "", msg);
                     break;
+            }
+        }
+
+        private void SetSilent(bool silent)
+        {
+            isSilent = silent;
+        }
+
+        private async Task Answer(string text, Message msg)
+        {
+            await bot.SendMessage(msg.Chat, text, parseMode: ParseMode.Html, linkPreviewOptions: true, messageThreadId: msg.MessageThreadId,
+                        replyParameters: new ReplyParameters() { MessageId = msg.Id },
+                        replyMarkup: new ReplyKeyboardRemove()); // also remove keyboard to clean-up things
+        }
+
+        private async Task AnswerNoPermissions(Message msg)
+        {
+            await Answer("""
+                No permissions
+                """, msg);
+        }
+
+        private async Task AnswerNoti(string text, Message msg)
+        {
+            if (isSilent)
+            {
+                await Answer(text, msg);
+            }
+            else
+            {
+                await SendMessage(text);
             }
         }
 
@@ -249,6 +296,7 @@ namespace RedButtonService
             if (string.IsNullOrEmpty(message)) return;
             if (_settings == null) return;
             if (_settings.AdminIds == null) return;
+            if (isSilent) return;
 
             foreach (var adminIdStr in _settings.AdminIds)
             {

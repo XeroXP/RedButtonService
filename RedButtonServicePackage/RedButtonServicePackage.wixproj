@@ -1,7 +1,10 @@
 ﻿<Project Sdk="WixToolset.Sdk/6.0.1">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-	  <SuppressPdbOutput>true</SuppressPdbOutput>
+    <SuppressPdbOutput>true</SuppressPdbOutput>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.Util.wixext" Version="6.0.1" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RedButtonService\RedButtonService.csproj" />
   </ItemGroup>

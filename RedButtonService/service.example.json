@@ -3,10 +3,7 @@
     "Token": "",
     "AdminIds": [ "111111111" ]
   },
-  "USBTrigger": {
-    "FileName": "erase",
-    "TimeCheckSeconds": 60
-  },
+  "USBTrigger": null,
   "UserLogonTrigger": {
     "Usernames": [ "SpecialUser" ]
   },

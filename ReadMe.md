@@ -100,6 +100,9 @@ Bot have some commands to control over service.
 - */disable* - disable erase
 - */enable*  - enable erase
 - */log_off* - log off all windows sessions
+- */silent*  - disable notifications
+- */loud*    - enable notifications
+- */restart* - restart windows service
 
 ## Credits
 

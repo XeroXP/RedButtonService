@@ -6,7 +6,7 @@
 <?define Version = "1.0.0.0" ?>
 <?define UpgradeCode = "9ED3FF33-8718-444E-B44B-69A2344B7E98" ?>
 
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
 	<Package Name="$(Name)"
              Manufacturer="$(Manufacturer)"
              Version="$(Version)"
@@ -67,7 +67,16 @@
                                 DisplayName="$(Name)"
                                 Description="A service that erase data."
                                 Start="auto"
-                                ErrorControl="normal" />
+                                ErrorControl="normal"
+								Account="LocalSystem">
+					<util:ServiceConfig
+						FirstFailureActionType="restart"
+						SecondFailureActionType="restart"
+						ThirdFailureActionType="restart"
+						ResetPeriodInDays="1"
+						RestartServiceDelayInSeconds="5"
+					/>
+				</ServiceInstall>
 
 				<!-- Tell WiX to start the Service -->
 				<ServiceControl Id="StartService"
