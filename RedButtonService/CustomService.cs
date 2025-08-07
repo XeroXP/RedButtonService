@@ -20,6 +20,8 @@ namespace RedButtonService
         private TelegramBotService _telegramBotService;
         private USBFlashDriveCheckerService _usbFlashDriveCheckerService;
 
+        private CancellationTokenSource cts;
+
         public CustomService(
             IConfiguration configuration,
             IHostEnvironment environment,
@@ -41,6 +43,8 @@ namespace RedButtonService
         {
             _logger.Log(LogLevel.Debug, $"On Start args: '{(args != null ? string.Join(',', args) : "")}'.");
             base.OnStart(args);
+
+            cts = new CancellationTokenSource();
 
             try
             {
@@ -72,11 +76,16 @@ namespace RedButtonService
             _usbFlashDriveCheckerService.TGMessageSend += TGMessageSendEvent;
             _usbFlashDriveCheckerService.EraseStart += EraseStartEvent;
             _usbFlashDriveCheckerService.Start();
+
+            Task.Run(() => Heartbeat(cts.Token));
         }
 
         protected override void OnStop()
         {
             base.OnStop();
+
+            cts?.Cancel();
+            cts = null;
 
             try
             {
@@ -226,6 +235,40 @@ namespace RedButtonService
         private void ServiceRestartEvent(object? sender, EventArgs e)
         {
             Task.Run(() => RestartService());
+        }
+
+        private async void Heartbeat(CancellationToken cancellationToken = default)
+        {
+            var delaySeconds = _settings.HeartbeatDelaySeconds ?? 60;
+            if (delaySeconds <= 0) delaySeconds = 1;
+
+            try
+            {
+                await Task.Delay(60 * 1000, cancellationToken);
+            }
+            catch { }
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    if (_settings.Eraser != null && _eraserService != null && !_eraserService.IsWorking)
+                        _eraserService.Start();
+
+                    if (_settings.Telegram != null && _telegramBotService != null && !_telegramBotService.IsWorking)
+                        _telegramBotService.Start();
+
+                    if (_settings.USBTrigger != null && _usbFlashDriveCheckerService != null && !_usbFlashDriveCheckerService.IsWorking)
+                        _usbFlashDriveCheckerService.Start();
+
+                    await Task.Delay(delaySeconds * 1000, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    if (ex is not OperationCanceledException)
+                        _logger.Log(LogLevel.Error, ex, "Error on heartbeat");
+                }
+            }
         }
     }
 }

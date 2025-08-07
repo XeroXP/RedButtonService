@@ -8,6 +8,7 @@ namespace RedButtonService.Models
 {
     public class ServiceSettings
     {
+        public int? HeartbeatDelaySeconds { get; set; }
         public TelegramSettings Telegram { get; set; }
         public USBTriggerSettings USBTrigger { get; set; }
         public UserLogonTriggerSettings UserLogonTrigger { get; set; }

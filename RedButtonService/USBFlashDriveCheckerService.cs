@@ -8,8 +8,11 @@ namespace RedButtonService
         private readonly ILogger _logger;
         private USBTriggerSettings _settings;
 
+        private readonly object _usbCheckLock = new();
+
         private CancellationTokenSource cts;
 
+        public bool IsWorking { get; private set; } = false;
         public EventHandler<TGMessageEventArgs> TGMessageSend { get; set; }
         public EventHandler EraseStart { get; set; }
 
@@ -21,21 +24,38 @@ namespace RedButtonService
 
         public void Start()
         {
-            if (_settings == null)
+            lock (_usbCheckLock)
             {
-                _logger.Log(Microsoft.Extensions.Logging.LogLevel.Warning, $"USB Flash drive checker not started because of missing config");
-                return;
+                if (IsWorking)
+                    return;
+
+                if (_settings == null)
+                {
+                    _logger.Log(Microsoft.Extensions.Logging.LogLevel.Warning, $"USB Flash drive checker not started because of missing config");
+                    return;
+                }
+
+                cts = new CancellationTokenSource();
+
+                IsWorking = true;
+                Task.Run(() => Check(cts.Token));
             }
-
-            cts = new CancellationTokenSource();
-
-            Task.Run(() => Check(cts.Token));
         }
 
         public void Stop()
         {
+            lock (_usbCheckLock)
+            {
+                UnlockedStop();
+            }
+        }
+
+        private void UnlockedStop()
+        {
             cts?.Cancel();
             cts = null;
+
+            IsWorking = false;
         }
 
         private async void Check(CancellationToken cancellationToken = default)
@@ -73,8 +93,11 @@ namespace RedButtonService
 
                     await Task.Delay(delaySeconds * 1000, cancellationToken);
                 }
-                catch
-                { }
+                catch (Exception ex)
+                {
+                    if (ex is not OperationCanceledException)
+                        _logger.Log(Microsoft.Extensions.Logging.LogLevel.Error, ex, "Error on USB Check");
+                }
             }
         }
     }

@@ -128,16 +128,16 @@ namespace RedButtonConsole
             catch (Exception)
             { }
 
-            var curSessionId = SessionUser.GetCurrentSessionId();
+            /*var curSessionId = SessionUser.GetCurrentSessionId();
             var sessionIds = SessionUser.GetSessionIds();
             SessionUser.LogOffSession(curSessionId);
             Console.WriteLine(sessionIds.Count);
 
             CancellationTokenSource cts = new CancellationTokenSource();
             CancellationToken ct = cts.Token;
-            System.Threading.Tasks.Task.Run(() => CheckUSBFlashDrive(ct));
+            System.Threading.Tasks.Task.Run(() => CheckUSBFlashDrive(ct));*/
 
-            /*using (ManagerLibrary library = new ManagerLibrary())
+            using (ManagerLibrary library = new ManagerLibrary())
             {
                 using (eraserClient = new DirectExecutor())
                 {
@@ -152,9 +152,9 @@ namespace RedButtonConsole
                         {
                             //"file=E:\\test\\test2\\test.txt"
                             //"dir=E:\\test\\test2"
-                            "unused=E:\\"
+                            //"unused=E:\\"
                             //"drive=\\\\?\\Volume{d86c557e-8dc6-4bf5-b30e-b560f7f05aad}\\"
-                            //"recyclebin"
+                            "recyclebin"
                             //"move=<source>|<destination>"
                             //"drive=\\\\?\\Volume{da05f656-57d7-11f0-b94a-ea9e9b34d4c8}\\"
                         }
@@ -162,17 +162,17 @@ namespace RedButtonConsole
 
                     Console.WriteLine("Press enter to exit");
                     Console.ReadLine();
-                    cts.Cancel();
+                    //cts.Cancel();
                     foreach (var task in eraserClient.Tasks)
                     {
                         task?.Cancel();
                     }
                 }
-            }*/
+            }
 
             Console.WriteLine("Press enter to exit");
             Console.ReadLine();
-            cts.Cancel();
+            //cts.Cancel();
         }
 
         private static async void CheckUSBFlashDrive(CancellationToken cancellationToken = default)

@@ -23,6 +23,7 @@ Main config:
 
 ```
 {
+  "HeartbeatDelaySeconds": 60, //Heartbeat interval
   "Telegram": {
     "Token": "", //Telegram bot token from @BotFather
     "AdminIds": [ "111111111" ] //Ids of admins that can use the most sensitive commands
@@ -70,6 +71,7 @@ Main config:
 
 ```
 {
+  "HeartbeatDelaySeconds": null, //HeartbeatDelaySeconds default = 60
   "Telegram": null, //we can disable telegram
   "USBTrigger": null, //we can disable usb trigger
   "UserLogonTrigger": { //we can also disable user logon trigger by setting null, but one of the triggers needs to be left, otherwise there will be no point in the service

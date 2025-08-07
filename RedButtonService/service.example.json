@@ -1,4 +1,5 @@
 ﻿{
+  "HeartbeatDelaySeconds": 60,
   "Telegram": {
     "Token": "",
     "AdminIds": [ "111111111" ]

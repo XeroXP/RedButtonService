@@ -116,6 +116,7 @@ namespace RedButtonService
 
         private readonly object _eraseLock = new();
 
+        public bool IsWorking { get; private set; } = false;
         public EventHandler<TGMessageEventArgs> TGMessageSend { get; set; }
 
         public EraserService(EraserSettings eraserSettings, ILoggerFactory loggerFactory)
@@ -128,6 +129,9 @@ namespace RedButtonService
         {
             lock (_eraseLock)
             {
+                if (IsWorking)
+                    return;
+
                 if (_settings == null || _settings.ToErase == null || _settings.ToErase.Count <= 0)
                 {
                     _logger.Log(Microsoft.Extensions.Logging.LogLevel.Warning, $"EraserService not started because of missing config");
@@ -153,11 +157,13 @@ namespace RedButtonService
                     eraserClient.TaskAdded += TaskAdded;
                     eraserClient.TaskDeleted += TaskDeleted;
                     eraserClient.Run();
+
+                    IsWorking = true;
                 }
                 catch (Exception ex)
                 {
                     _logger.Log(Microsoft.Extensions.Logging.LogLevel.Error, ex, "Error on Start eraser service");
-                    Stop();
+                    UnlockedStop();
                 }
             }
         }
@@ -166,45 +172,52 @@ namespace RedButtonService
         {
             lock (_eraseLock)
             {
-                cts?.Cancel();
-                cts = null;
+                UnlockedStop();
+            }
+        }
 
-                try
+        private void UnlockedStop()
+        {
+            cts?.Cancel();
+            cts = null;
+
+            try
+            {
+                if (eraserClient != null)
                 {
-                    if (eraserClient != null)
+                    foreach (var task in eraserClient.Tasks)
                     {
-                        foreach (var task in eraserClient.Tasks)
-                        {
-                            task?.Cancel();
-                        }
-
-                        eraserClient.Tasks.Clear();
-
-                        eraserClient.TaskAdded -= TaskAdded;
-                        eraserClient.TaskDeleted -= TaskDeleted;
-
-                        eraserClient.Dispose();
-                        eraserClient = null;
+                        task?.Cancel();
                     }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Log(Microsoft.Extensions.Logging.LogLevel.Error, ex, "Error on Stop eraserClient");
-                }
 
-                try
-                {
-                    if (library != null)
-                    {
-                        library.Dispose();
-                        library = null;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.Log(Microsoft.Extensions.Logging.LogLevel.Error, ex, "Error on Stop library");
+                    eraserClient.Tasks.Clear();
+
+                    eraserClient.TaskAdded -= TaskAdded;
+                    eraserClient.TaskDeleted -= TaskDeleted;
+
+                    eraserClient.Dispose();
+                    eraserClient = null;
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.Log(Microsoft.Extensions.Logging.LogLevel.Error, ex, "Error on Stop eraserClient");
+            }
+
+            try
+            {
+                if (library != null)
+                {
+                    library.Dispose();
+                    library = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(Microsoft.Extensions.Logging.LogLevel.Error, ex, "Error on Stop library");
+            }
+
+            IsWorking = false;
         }
 
         public void RunErase()

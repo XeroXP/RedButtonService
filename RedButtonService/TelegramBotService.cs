@@ -20,6 +20,9 @@ namespace RedButtonService
         private TelegramBotClient bot;
         private bool isSilent = false;
 
+        private readonly object _tgLock = new();
+
+        public bool IsWorking { get; private set; } = false;
         public EventHandler EraseStart { get; set; }
         public EventHandler EraseCancel { get; set; }
         public EventHandler<EraseBlockEventArgs> EraseBlock { get; set; }
@@ -32,37 +35,52 @@ namespace RedButtonService
             _settings = telegramSettings;
         }
 
-        public async void Start()
+        public void Start()
         {
-            if (_settings == null || string.IsNullOrEmpty(_settings.Token))
+            lock (_tgLock)
             {
-                _logger.Log(LogLevel.Warning, $"Telegram bot not started because of missing config");
-                return;
-            }
+                if (IsWorking)
+                    return;
 
-            try
-            {
-                cts = new CancellationTokenSource();
-                bot = new TelegramBotClient(_settings.Token, cancellationToken: cts.Token);
+                if (_settings == null || string.IsNullOrEmpty(_settings.Token))
+                {
+                    _logger.Log(LogLevel.Warning, $"Telegram bot not started because of missing config");
+                    return;
+                }
 
-                me = await bot.GetMe();
-                //await bot.DeleteWebhook();
-                //await bot.DropPendingUpdates();
+                try
+                {
+                    cts = new CancellationTokenSource();
+                    bot = new TelegramBotClient(_settings.Token, cancellationToken: cts.Token);
 
-                bot.OnError += OnError;
-                bot.OnMessage += OnMessage;
-                bot.OnUpdate += OnUpdate;
+                    me = bot.GetMe().GetAwaiter().GetResult();
+                    //await bot.DeleteWebhook();
+                    //await bot.DropPendingUpdates();
 
-                _logger.Log(LogLevel.Information, $"Telegram bot {me.Username} was started");
-            }
-            catch (Exception ex)
-            {
-                _logger.Log(LogLevel.Error, ex, "Error on Start telegram bot");
-                Stop();
+                    bot.OnError += OnError;
+                    bot.OnMessage += OnMessage;
+                    bot.OnUpdate += OnUpdate;
+
+                    _logger.Log(LogLevel.Information, $"Telegram bot {me.Username} was started");
+                    IsWorking = true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.Error, ex, "Error on Start telegram bot");
+                    UnlockedStop();
+                }
             }
         }
 
         public void Stop()
+        {
+            lock (_tgLock)
+            {
+                UnlockedStop();
+            }
+        }
+
+        private void UnlockedStop()
         {
             cts?.Cancel();
             cts = null;
@@ -81,6 +99,8 @@ namespace RedButtonService
             {
                 _logger.Log(LogLevel.Error, ex, "Error on Stop telegram bot");
             }
+
+            IsWorking = false;
         }
 
         async Task OnError(Exception exception, HandleErrorSource source)
