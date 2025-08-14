@@ -428,7 +428,7 @@ namespace Eraser.Manager
 
 			public override void Clear()
 			{
-				foreach (Task task in list)
+				foreach (Task task in list.ToArray())
 					Remove(task);
 			}
 
