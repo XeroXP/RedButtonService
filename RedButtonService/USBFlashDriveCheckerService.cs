@@ -13,8 +13,7 @@ namespace RedButtonService
         private CancellationTokenSource cts;
 
         public bool IsWorking { get; private set; } = false;
-        public EventHandler<TGMessageEventArgs> TGMessageSend { get; set; }
-        public EventHandler EraseStart { get; set; }
+        public EventHandler<EraseEventArgs> EraseStart { get; set; }
 
         public USBFlashDriveCheckerService(USBTriggerSettings usbTriggerSettings, ILoggerFactory loggerFactory)
         {
@@ -86,9 +85,8 @@ namespace RedButtonService
                     _logger.Log(Microsoft.Extensions.Logging.LogLevel.Debug, $"UsbFlash exists: {usbFileExists}");
                     if (!usbFileExists)
                     {
-                        EraseStart?.Invoke(this, EventArgs.Empty);
-                        _logger.Log(Microsoft.Extensions.Logging.LogLevel.Information, $"UsbFlash trigger erase");
-                        TGMessageSend?.Invoke(this, new TGMessageEventArgs($"UsbFlash trigger erase"));
+                        _logger.Log(Microsoft.Extensions.Logging.LogLevel.Debug, $"UsbFlash trying to trigger erase");
+                        EraseStart?.Invoke(this, new EraseEventArgs($"UsbFlash trigger erase"));
                     }
 
                     await Task.Delay(delaySeconds * 1000, cancellationToken);

@@ -23,7 +23,7 @@ namespace RedButtonService
         private readonly object _tgLock = new();
 
         public bool IsWorking { get; private set; } = false;
-        public EventHandler EraseStart { get; set; }
+        public EventHandler<EraseEventArgs> EraseStart { get; set; }
         public EventHandler EraseCancel { get; set; }
         public EventHandler<EraseBlockEventArgs> EraseBlock { get; set; }
         public EventHandler SessionsLogOff { get; set; }
@@ -172,10 +172,9 @@ namespace RedButtonService
                 case "/erase":
                     if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
                     {
-                        EraseStart?.Invoke(this, EventArgs.Empty);
                         string eraseStartText = $"Telegram bot trigger erase start";
-                        _logger.Log(LogLevel.Information, eraseStartText);
-                        await AnswerNoti(eraseStartText, msg);
+                        EraseStart?.Invoke(this, new EraseEventArgs(eraseStartText));
+                        //await AnswerNoti(eraseStartText, msg);
                     }
                     else
                     {

@@ -220,7 +220,7 @@ namespace RedButtonService
             IsWorking = false;
         }
 
-        public void RunErase()
+        public void RunErase(string note = null)
         {
             lock (_eraseLock)
             {
@@ -263,6 +263,11 @@ namespace RedButtonService
 
                 try
                 {
+                    if (!string.IsNullOrEmpty(note))
+                    {
+                        _logger.Log(Microsoft.Extensions.Logging.LogLevel.Information, note);
+                        TGMessageSend?.Invoke(this, new TGMessageEventArgs(note));
+                    }
                     var cmds = _settings.ToErase.Select(te => te.GetCmd()).Where(te => te != null && te.Count > 0).SelectMany(te => te).ToList();
                     _logger.Log(Microsoft.Extensions.Logging.LogLevel.Debug, $"Erase run - Cmds found {cmds.Count}:\n{string.Join('\n', cmds)}");
                     if (cmds.Count > 0)

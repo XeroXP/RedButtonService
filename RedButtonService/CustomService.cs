@@ -73,7 +73,6 @@ namespace RedButtonService
             _telegramBotService.Start();
 
             _usbFlashDriveCheckerService = new USBFlashDriveCheckerService(_settings.USBTrigger, _loggerFactory);
-            _usbFlashDriveCheckerService.TGMessageSend += TGMessageSendEvent;
             _usbFlashDriveCheckerService.EraseStart += EraseStartEvent;
             _usbFlashDriveCheckerService.Start();
 
@@ -93,7 +92,6 @@ namespace RedButtonService
                 _telegramBotService?.Stop();
                 _eraserService?.Stop();
 
-                _usbFlashDriveCheckerService.TGMessageSend -= TGMessageSendEvent;
                 _usbFlashDriveCheckerService.EraseStart -= EraseStartEvent;
                 _telegramBotService.EraseStart -= EraseStartEvent;
                 _telegramBotService.EraseCancel -= EraseCancelEvent;
@@ -138,9 +136,7 @@ namespace RedButtonService
                 {
                     if (_settings.UserLogonTrigger.Usernames.Any(userLogonUsername => userName.Contains(userLogonUsername)))
                     {
-                        eraseStart();
-                        _logger.Log(LogLevel.Information, $"User '{userName}' trigger erase");
-                        tgMessageSend($"User '{userName}' trigger erase").GetAwaiter().GetResult();
+                        eraseStart($"User '{userName}' trigger erase");
                     }
                 }
             }
@@ -171,9 +167,9 @@ namespace RedButtonService
             }
         }
 
-        private void EraseStartEvent(object? sender, EventArgs e)
+        private void EraseStartEvent(object? sender, EraseEventArgs e)
         {
-            eraseStart();
+            eraseStart(e.Note);
         }
 
         private void EraseCancelEvent(object? sender, EventArgs e)
@@ -186,11 +182,11 @@ namespace RedButtonService
             eraseBlock(e.Block);
         }
 
-        private void eraseStart()
+        private void eraseStart(string note = null)
         {
             if (_eraserService != null)
             {
-                _eraserService.RunErase();
+                _eraserService.RunErase(note);
             }
         }
 
