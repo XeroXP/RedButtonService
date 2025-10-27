@@ -19,6 +19,7 @@ namespace RedButtonService
         private User me;
         private TelegramBotClient bot;
         private bool isSilent = false;
+        private bool showPCUnlock = true;
 
         private readonly object _tgLock = new();
 
@@ -157,6 +158,8 @@ namespace RedButtonService
                 /log_off  - log off all sessions
                 /silent   - disable notifications
                 /loud     - enable notifications
+                /show_pc_unlock - show pc unlocks
+                /hide_pc_unlock - hide pc unlocks
                 /restart  - restart service
                 """;
                     await Answer(helpText, msg);
@@ -259,6 +262,32 @@ namespace RedButtonService
                         await AnswerNoPermissions(msg);
                     }
                     break;
+                case "/show_pc_unlock":
+                    if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
+                    {
+                        string silentText = $"Telegram bot now shows pc unlocks";
+                        _logger.Log(LogLevel.Information, silentText);
+                        await AnswerNoti(silentText, msg);
+                        SetShowPCUnlock(true);
+                    }
+                    else
+                    {
+                        await AnswerNoPermissions(msg);
+                    }
+                    break;
+                case "/hide_pc_unlock":
+                    if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
+                    {
+                        SetShowPCUnlock(false);
+                        string loudText = $"Telegram bot now don't show pc unlocks";
+                        _logger.Log(LogLevel.Information, loudText);
+                        await AnswerNoti(loudText, msg);
+                    }
+                    else
+                    {
+                        await AnswerNoPermissions(msg);
+                    }
+                    break;
                 case "/restart":
                     if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
                     {
@@ -281,6 +310,11 @@ namespace RedButtonService
         private void SetSilent(bool silent)
         {
             isSilent = silent;
+        }
+
+        private void SetShowPCUnlock(bool showPCUnlock)
+        {
+            this.showPCUnlock = showPCUnlock;
         }
 
         private async Task Answer(string text, Message msg)
@@ -307,6 +341,13 @@ namespace RedButtonService
             {
                 await SendMessage(text);
             }
+        }
+
+        public async Task LogUnlock(string message)
+        {
+            if (!showPCUnlock) return;
+
+            await SendMessage(message);
         }
 
         public async Task SendMessage(string message)

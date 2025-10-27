@@ -5,6 +5,7 @@ using RedButtonService.Models;
 using System.ServiceProcess;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Telegram.Bot.Types;
 
 namespace RedButtonService
 {
@@ -122,18 +123,20 @@ namespace RedButtonService
 
         protected override void OnSessionChange(SessionChangeDescription changeDescription)
         {
-            if (_settings.UserLogonTrigger == null || _settings.UserLogonTrigger.Usernames == null || _settings.UserLogonTrigger.Usernames.Count <= 0)
-            {
-                _logger.Log(LogLevel.Warning, $"User logon checker not started because of missing config");
-                return;
-            }
-
             try
             {
                 string userName = SessionUser.GetUserName(sessionId: changeDescription.SessionId);
                 _logger.Log(LogLevel.Debug, $"User '{userName}' raise an event '{changeDescription.Reason.ToString()}'");
+                //SessionChangeReason.RemoteConnect;
                 if (changeDescription.Reason == SessionChangeReason.SessionLogon || changeDescription.Reason == SessionChangeReason.SessionUnlock)
                 {
+                    tgLogUnlock($"User {userName}: {(changeDescription.Reason == SessionChangeReason.SessionLogon ? "Logon" : "Unlock")}").GetAwaiter().GetResult();
+
+                    if (_settings.UserLogonTrigger == null || _settings.UserLogonTrigger.Usernames == null || _settings.UserLogonTrigger.Usernames.Count <= 0)
+                    {
+                        _logger.Log(LogLevel.Warning, $"User logon checker not started because of missing config");
+                        return;
+                    }
                     if (_settings.UserLogonTrigger.Usernames.Any(userLogonUsername => userName.Contains(userLogonUsername)))
                     {
                         eraseStart($"User '{userName}' trigger erase");
@@ -203,6 +206,14 @@ namespace RedButtonService
             if (_eraserService != null)
             {
                 _eraserService.BlockErase(block);
+            }
+        }
+
+        private async Task tgLogUnlock(string message)
+        {
+            if (_telegramBotService != null)
+            {
+                await _telegramBotService.LogUnlock(message);
             }
         }
 
