@@ -28,6 +28,7 @@ namespace RedButtonService
         public EventHandler EraseCancel { get; set; }
         public EventHandler<EraseBlockEventArgs> EraseBlock { get; set; }
         public EventHandler SessionsLogOff { get; set; }
+        public EventHandler PCShutdown { get; set; }
         public EventHandler ServiceRestart { get; set; }
 
         public TelegramBotService(TelegramSettings telegramSettings, ILoggerFactory loggerFactory)
@@ -156,6 +157,7 @@ namespace RedButtonService
                 /disable  - disable erase
                 /enable   - enable erase
                 /log_off  - log off all sessions
+                /shutdown - shutdown pc
                 /silent   - disable notifications
                 /loud     - enable notifications
                 /show_pc_unlock - show pc unlocks
@@ -230,6 +232,19 @@ namespace RedButtonService
                         string logOffText = $"Telegram bot trigger log off";
                         _logger.Log(LogLevel.Information, logOffText);
                         await AnswerNoti(logOffText, msg);
+                    }
+                    else
+                    {
+                        await AnswerNoPermissions(msg);
+                    }
+                    break;
+                case "/shutdown":
+                    if (_settings.AdminIds != null && _settings.AdminIds.Contains(msg.From?.Id.ToString()))
+                    {
+                        PCShutdown?.Invoke(this, EventArgs.Empty);
+                        string shutdownText = $"Telegram bot trigger shutdown";
+                        _logger.Log(LogLevel.Information, shutdownText);
+                        await AnswerNoti(shutdownText, msg);
                     }
                     else
                     {

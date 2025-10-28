@@ -70,6 +70,7 @@ namespace RedButtonService
             _telegramBotService.EraseCancel += EraseCancelEvent;
             _telegramBotService.EraseBlock += EraseBlockEvent;
             _telegramBotService.SessionsLogOff += SessionsLogOffEvent;
+            _telegramBotService.PCShutdown += PCShutdownEvent;
             _telegramBotService.ServiceRestart += ServiceRestartEvent;
             _telegramBotService.Start();
 
@@ -98,6 +99,7 @@ namespace RedButtonService
                 _telegramBotService.EraseCancel -= EraseCancelEvent;
                 _telegramBotService.EraseBlock -= EraseBlockEvent;
                 _telegramBotService.SessionsLogOff -= SessionsLogOffEvent;
+                _telegramBotService.PCShutdown -= PCShutdownEvent;
                 _telegramBotService.ServiceRestart -= ServiceRestartEvent;
                 _eraserService.TGMessageSend -= TGMessageSendEvent;
 
@@ -168,6 +170,27 @@ namespace RedButtonService
             {
                 _logger.Log(LogLevel.Error, ex, "Error on SessionsLogOffEvent");
             }
+        }
+
+        private void PCShutdownEvent(object? sender, EventArgs e)
+        {
+            pcShutdown();
+        }
+
+        private void pcShutdown()
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(5 * 1000);
+                    ExitWindows.Shutdown(true);
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.Error, ex, "Error on PCShutdownEvent");
+                }
+            });
         }
 
         private void EraseStartEvent(object? sender, EraseEventArgs e)
