@@ -449,7 +449,20 @@ namespace Eraser.Manager
 		{
 			OnTaskStarted();
 			Executing = true;
-			Canceled = false;
+			if (Schedule is RecurringSchedule)
+			{
+				Canceled = false;
+			}
+			else
+			{
+				if (Canceled)
+				{
+					Progress = null;
+					Executing = false;
+					OnTaskFinished();
+					return;
+				}
+            }
 			Progress = new SteppedProgressManager();
 
 			try
@@ -458,6 +471,7 @@ namespace Eraser.Manager
 				foreach (IErasureTarget target in Targets)
 					try
 					{
+						if (Canceled) break;
 						Progress.Steps.Add(new ErasureTargetProgressManagerStep(
 							target, Targets.Count));
 						target.Execute();

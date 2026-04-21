@@ -59,6 +59,7 @@ namespace RedButtonService
 
             var options = new JsonSerializerOptions();
             options.Converters.Add(new JsonStringEnumConverter());
+            options.ReferenceHandler = ReferenceHandler.IgnoreCycles;
             _logger.Log(LogLevel.Information, $"Loaded configuration:\n{JsonSerializer.Serialize(_settings, options)}");
 
             _eraserService = new EraserService(_settings.Eraser, _loggerFactory);

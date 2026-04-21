@@ -171,6 +171,7 @@ namespace RedButtonService
                     options.WriteIndented = true;
                     options.Encoder = JavaScriptEncoder.Default;
                     options.Converters.Add(new JsonStringEnumConverter());
+                    options.ReferenceHandler = ReferenceHandler.IgnoreCycles;
                     string debugText = JsonSerializer.Serialize(msg, options);
                     await Answer(debugText, msg);
                     break;

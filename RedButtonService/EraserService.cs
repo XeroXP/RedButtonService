@@ -4,6 +4,9 @@ using Eraser.Plugins.Registrars;
 using Eraser.Util;
 using LockCheck;
 using RedButtonService.Models;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 
 namespace RedButtonService
@@ -299,6 +302,24 @@ namespace RedButtonService
                 {
                     if (eraserClient != null)
                     {
+                        var options = new JsonSerializerOptions();
+                        options.Converters.Add(new JsonStringEnumConverter());
+                        options.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                        options.TypeInfoResolver = new DefaultJsonTypeInfoResolver
+                        {
+                            Modifiers = { modifier =>
+                            {
+                                foreach (var property in modifier.Properties)
+                                {
+                                    if (typeof(Delegate).IsAssignableFrom(property.PropertyType))
+                                    {
+                                        property.ShouldSerialize = (_, _) => false;
+                                    }
+                                }
+                            }}
+                        };
+                        _logger.Log(Microsoft.Extensions.Logging.LogLevel.Debug, $"EraserClient:\n{JsonSerializer.Serialize(eraserClient, options)}");
+
                         foreach (var task in eraserClient.Tasks)
                         {
                             task?.Cancel();
@@ -322,10 +343,28 @@ namespace RedButtonService
         {
             if (timeStatusSendMinutes > 0)
             {
-                while (task != null && task.Executing && !task.Canceled && !cancellationToken.IsCancellationRequested)
+                while (task != null && task.Executing && !task.Canceled && IsWorking && !cancellationToken.IsCancellationRequested)
                 {
                     try
                     {
+                        var options = new JsonSerializerOptions();
+                        options.Converters.Add(new JsonStringEnumConverter());
+                        options.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                        options.TypeInfoResolver = new DefaultJsonTypeInfoResolver
+                        {
+                            Modifiers = { modifier =>
+                            {
+                                foreach (var property in modifier.Properties)
+                                {
+                                    if (typeof(Delegate).IsAssignableFrom(property.PropertyType))
+                                    {
+                                        property.ShouldSerialize = (_, _) => false;
+                                    }
+                                }
+                            }}
+                        };
+                        _logger.Log(Microsoft.Extensions.Logging.LogLevel.Debug, $"Task:\n{JsonSerializer.Serialize(task, options)}");
+
                         if (task.Progress != null)
                         {
                             TGMessageSend?.Invoke(this, new TGMessageEventArgs($"{task.Name}: {task.Progress.Progress.ToString("0.00%")} ({(task.Progress.TimeLeft > TimeSpan.Zero ? task.Progress.TimeLeft.ToString(@"hh\:mm\:ss") : "endless")})"));
@@ -412,7 +451,7 @@ namespace RedButtonService
             TGMessageSend?.Invoke(this, new TGMessageEventArgs($"TaskStarted: {((Eraser.Manager.Task)sender).Name}"));
             if (TGMessageSend != null)
             {
-                System.Threading.Tasks.Task.Run(() => CheckTaskProgress((Eraser.Manager.Task)sender), cts != null ? cts.Token : default);
+                System.Threading.Tasks.Task.Run(() => CheckTaskProgress((Eraser.Manager.Task)sender, cts != null ? cts.Token : default));
             }
         }
 
