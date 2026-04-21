@@ -322,7 +322,7 @@ namespace RedButtonService
         {
             if (timeStatusSendMinutes > 0)
             {
-                while (task != null && task.Executing && !cancellationToken.IsCancellationRequested)
+                while (task != null && task.Executing && !task.Canceled && !cancellationToken.IsCancellationRequested)
                 {
                     try
                     {
